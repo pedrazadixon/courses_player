@@ -91,20 +91,28 @@ class myMainWindow(QMainWindow, Ui_MainWindow):
         self.vlc_mediaplayer.set_position(pos / 1000.0)
 
     def open_file(self):
-        directory = QFileDialog.getExistingDirectory(self, 'Open Video')
+        directory = QFileDialog.getExistingDirectory(self, 'Open Video Folder')
         if directory != '':
-
+            self.treePlaylist.clear()
+            self.playlist = []
             index_count = 0
             for root, subdirs, files in os_sorted(os.walk(directory)):
                 if len(files) == 0:
                     continue
-                top_tree_item = QTreeWidgetItem(self.treePlaylist)
-                top_tree_item.setText(0, os.path.basename(root))
-                top_tree_item.setExpanded(True)
-                self.treePlaylist.addTopLevelItem(top_tree_item)
+
+                current_top_lvl_added = False
+
                 for file in files:
-                    if os.path.splitext(file)[1] != '.mp4':
+                    if os.path.splitext(file)[1].lower() not in ['.mp4', '.mkv', '.avi', '.wmv']:
                         continue
+
+                    if not current_top_lvl_added:
+                        top_tree_item = QTreeWidgetItem(self.treePlaylist)
+                        top_tree_item.setText(0, os.path.basename(root))
+                        top_tree_item.setExpanded(True)
+                        self.treePlaylist.addTopLevelItem(top_tree_item)
+                        current_top_lvl_added = True
+
                     self.playlist.append(os.path.join(root, file))
                     sub_tree_item = QTreeWidgetItem(top_tree_item)
                     sub_tree_item.setText(3, str(index_count))

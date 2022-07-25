@@ -183,6 +183,7 @@ class Ui_MainWindow(object):
         self.treePlaylist.headerItem().setText(1, _translate("MainWindow", "Estado"))
         self.treePlaylist.headerItem().setText(2, _translate("MainWindow", "Duración"))
         self.treePlaylist.headerItem().setText(3, _translate("MainWindow", "index"))
+        self.treePlaylist.headerItem().setText(4, _translate("MainWindow", "md5"))
         self.actionOpen_Folder.setText(_translate("MainWindow", "Open Folder"))
         self.actionPlaylist.setText(_translate("MainWindow", "Playlist"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))

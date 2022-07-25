@@ -342,6 +342,11 @@
          <string>index</string>
         </property>
        </column>
+       <column>
+        <property name="text">
+         <string>md5</string>
+        </property>
+       </column>
       </widget>
      </item>
     </layout>
