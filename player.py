@@ -2,7 +2,7 @@ import glob
 import os
 import sys
 from time import sleep
-from PyQt5.QtWidgets import QTableWidgetItem, QApplication, QMainWindow, QStyle, QFileDialog
+from PyQt5.QtWidgets import QTableWidgetItem, QApplication, QMainWindow, QStyle, QFileDialog, QTreeWidgetItem
 from PyQt5.QtCore import QTime
 import vlc
 from ui.main import Ui_MainWindow
@@ -21,7 +21,7 @@ class myMainWindow(QMainWindow, Ui_MainWindow):
         self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
         self.playButton.setEnabled(False)
 
-        self.rn = self.playlistTableWidget.rowCount()
+        # self.rn = self.playlistTableWidget.rowCount()
 
         self.vlc_instance = vlc_mod.get_vlc_instance()
         self.vlc_mediaplayer = vlc_mod.get_vlc_mediaplayer()
@@ -68,19 +68,23 @@ class myMainWindow(QMainWindow, Ui_MainWindow):
 
         self.positionSlider.sliderMoved.connect(self.positionSliderSliderMoved)
 
-        self.playlistTableWidget.itemDoubleClicked.connect(self.itemDoubleClicked)
+        self.treePlaylist.itemDoubleClicked.connect(self.itemDoubleClicked)
 
         self.playlist = []
 
+        self.treePlaylist.setColumnHidden(3, True)
+
     def itemDoubleClicked(self, event):
-        media = self.vlc_instance.media_new(self.playlist[event.row()])
-        media.parse()
-        self.vlc_mediaplayer.set_media(media)
-        self.startDurationLabel.setText('00:00:00')
-        mtime = QTime(0, 0, 0, 0)
-        mtime = mtime.addMSecs(media.get_duration())
-        self.endDurationLabel.setText(mtime.toString())
-        self.vlc_mediaplayer.play()
+        if event.data(3, 0) is not None:
+            filename = self.playlist[int(event.data(3, 0))]
+            media = self.vlc_instance.media_new(filename)
+            media.parse()
+            self.vlc_mediaplayer.set_media(media)
+            self.startDurationLabel.setText('00:00:00')
+            mtime = QTime(0, 0, 0, 0)
+            mtime = mtime.addMSecs(media.get_duration())
+            self.endDurationLabel.setText(mtime.toString())
+            self.vlc_mediaplayer.play()
 
     def positionSliderSliderMoved(self):
         pos = self.positionSlider.value()
@@ -89,18 +93,27 @@ class myMainWindow(QMainWindow, Ui_MainWindow):
     def open_file(self):
         directory = QFileDialog.getExistingDirectory(self, 'Open Video')
         if directory != '':
-            print(directory)
 
-            self.playlist = os_sorted(glob.glob(directory + '/**/*.mp4', recursive=True))
+            index_count = 0
+            for root, subdirs, files in os_sorted(os.walk(directory)):
+                if len(files) == 0:
+                    continue
+                top_tree_item = QTreeWidgetItem(self.treePlaylist)
+                top_tree_item.setText(0, os.path.basename(root))
+                top_tree_item.setExpanded(True)
+                self.treePlaylist.addTopLevelItem(top_tree_item)
+                for file in files:
+                    if os.path.splitext(file)[1] != '.mp4':
+                        continue
+                    self.playlist.append(os.path.join(root, file))
+                    sub_tree_item = QTreeWidgetItem(top_tree_item)
+                    sub_tree_item.setText(3, str(index_count))
+                    sub_tree_item.setText(0, file)
+                    sub_tree_item.setText(1, 'visto')
+                    sub_tree_item.setText(2, '3:45')
+                    index_count += 1
 
-            print(self.playlist)
-
-            for item in self.playlist:
-                self.playlistTableWidget.insertRow(self.rn)
-                self.playlistTableWidget.setItem(self.rn, 0, QTableWidgetItem(os.path.basename(item)))
-                self.playlistTableWidget.setItem(self.rn, 1, QTableWidgetItem("Visto"))
-                self.playlistTableWidget.setItem(self.rn, 2, QTableWidgetItem("3:45"))
-                self.rn += 1
+            self.treePlaylist.resizeColumnToContents(0)
 
     def rateSliderValueChanged(self, value):
         self.vlc_mediaplayer.set_rate(self.rateSliderValues[value])
